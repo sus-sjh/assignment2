@@ -21,7 +21,10 @@ import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
-public  class  Client implements ActionListener{
+public class Client implements ActionListener {
+    DefaultListModel<String> rooms_model;
+    DefaultListModel<String> users_model;
+    DefaultListModel<String> users_model2;
     private JFrame frame;
     private Socket socket;
     private BufferedReader br;
@@ -42,9 +45,6 @@ public  class  Client implements ActionListener{
     private JTextPane msgArea;
     private JScrollPane textScrollPane;
     private JScrollBar vertical;
-    DefaultListModel<String> rooms_model;
-    DefaultListModel<String> users_model;
-    DefaultListModel<String> users_model2;
     private JFrame loginFrame;
     private JFrame registerFrame;
     private JFrame chatFrame;
@@ -53,20 +53,44 @@ public  class  Client implements ActionListener{
     private JFrame roomCreateFrame;
     private JFrame roomJoinFrame;
 
-    public Client(){
+    public Client() {
         rooms_map = new HashMap<>();
         users_map = new HashMap<>();
         users_map2 = new HashMap<>();
         initialize();
     }
 
+    public static void setUIFont() {
+        Font f = new Font("微软雅黑", Font.PLAIN, 14);
+        String[] names = {"Label", "CheckBox", "PopupMenu", "MenuItem", "CheckBoxMenuItem",
+                "JRadioButtonMenuItem", "ComboBox", "Button", "Tree", "ScrollPane",
+                "TabbedPane", "EditorPane", "TitledBorder", "Menu", "TextArea", "TextPane",
+                "OptionPane", "MenuBar", "ToolBar", "ToggleButton", "ToolTip",
+                "ProgressBar", "TableHeader", "Panel", "List", "ColorChooser",
+                "PasswordField", "TextField", "Table", "Label", "Viewport",
+                "RadioButtonMenuItem", "RadioButton", "DesktopPane", "InternalFrame"
+        };
+        for (String item : names) {
+            UIManager.put(item + ".font", f);
+        }
+    }
 
-    public boolean connect(String host, int port){
+    public static void setUIStyle() {
+        String lookAndFeel = UIManager.getSystemLookAndFeelClassName();
+        try {
+            UIManager.setLookAndFeel(lookAndFeel);
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException |
+                 UnsupportedLookAndFeelException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public boolean connect(String host, int port) {
         try {
             socket = new Socket(host, port);
-            System.out.println("Connected to server!"+socket.getRemoteSocketAddress());
-            br=new BufferedReader(new InputStreamReader(System.in));
-            pw=new PrintWriter(socket.getOutputStream());
+            System.out.println("Connected to server!" + socket.getRemoteSocketAddress());
+            br = new BufferedReader(new InputStreamReader(System.in));
+            pw = new PrintWriter(socket.getOutputStream());
             ClientThread thread = new ClientThread(socket, this);
             thread.start();
 
@@ -79,10 +103,9 @@ public  class  Client implements ActionListener{
         }
     }
 
-
-    public void sendMsg(String msg, String code){
+    public void sendMsg(String msg, String code) {
         try {
-            pw.println("<code>"+code+"</code><msg>"+msg+"</msg>");
+            pw.println("<code>" + code + "</code><msg>" + msg + "</msg>");
             pw.flush();
         } catch (Exception e) {
             System.out.println("error in sendMsg()");
@@ -124,7 +147,7 @@ public  class  Client implements ActionListener{
         JLabel host_label = new JLabel("服务器IP");
         JLabel port_label = new JLabel("端口");
         JLabel name_label = new JLabel("昵称");
-        JButton single_chat=new JButton("一对一聊天");
+        JButton single_chat = new JButton("一对一聊天");
         JButton head_connect = new JButton("连接");
         JButton head_create = new JButton("创建聊天");
         headPanel.add(host_label);
@@ -166,7 +189,7 @@ public  class  Client implements ActionListener{
                 GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
         rightPanel.add(users_label, new GridBagConstraints(0, 0, 1, 1, 1, 1,
                 GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-        rightPanel.add(userListPane,new GridBagConstraints(0, 1, 1, 1, 100, 100,
+        rightPanel.add(userListPane, new GridBagConstraints(0, 1, 1, 1, 100, 100,
                 GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
         userlist2 = new JList<>(users_model2);
         JPanel onlineUsersPanel = new JPanel(flowLayout);
@@ -222,8 +245,8 @@ public  class  Client implements ActionListener{
                 break;
             case "加入聊天":
                 String selected = roomlist.getSelectedValue();
-                if(rooms_map.containsKey(selected)){
-                    sendMsg(""+rooms_map.get(selected), "join");
+                if (rooms_map.containsKey(selected)) {
+                    sendMsg("" + rooms_map.get(selected), "join");
                 }
                 break;
             case "退出聊天":
@@ -232,7 +255,7 @@ public  class  Client implements ActionListener{
             case "发送":
                 String text = text_field.getText();
                 text_field.setText("");
-                if(text.length()!=0){
+                if (text.length() != 0) {
                     sendMsg(text, "message");
                 }
                 break;
@@ -241,8 +264,8 @@ public  class  Client implements ActionListener{
                 break;
             case "创建聊天":
                 String string = JOptionPane.showInputDialog("请输入你的聊天名称");
-                if(string==null || string.equals("")){
-                    string = name+(int)(Math.random()*10000)+"的聊天";
+                if (string == null || string.equals("")) {
+                    string = name + (int) (Math.random() * 10000) + "的聊天";
                     sendMsg(string, "create");
                 } else {
                     sendMsg(string, "create");
@@ -250,7 +273,7 @@ public  class  Client implements ActionListener{
                 break;
             case "一对一聊天":
                 String id = JOptionPane.showInputDialog("请输入对方的id");
-                if(id!=null && !id.equals("")){
+                if (id != null && !id.equals("")) {
                     sendMsg(id, "single");
                 }
                 break;
@@ -260,67 +283,68 @@ public  class  Client implements ActionListener{
 
     }
 
-    public void addUser(String content){
-        if(content.length()>0){
+    public void addUser(String content) {
+        if (content.length() > 0) {
             Pattern pattern = Pattern.compile("<name>(.*)</name><id>(.*)</id>");
             Matcher matcher = pattern.matcher(content);
-            if(matcher.find()){
+            if (matcher.find()) {
                 String name = matcher.group(1);
                 String id = matcher.group(2);
                 insertUser(Integer.parseInt(id), name);
-                insertMessage(textScrollPane, msgArea, null, "系统：", name+"加入了聊天室");
+                insertMessage(textScrollPane, msgArea, null, "系统：", name + "加入了聊天室");
             }
         }
-        users_label.setText("聊天人数："+users_map.size());
+        users_label.setText("聊天人数：" + users_map.size());
     }
-    public void addUser1(String content){
-        if(content.length()>0){
+
+    public void addUser1(String content) {
+        if (content.length() > 0) {
             Pattern pattern = Pattern.compile("<name>(.*)</name><id>(.*)</id>");
             Matcher matcher = pattern.matcher(content);
-            if(matcher.find()){
+            if (matcher.find()) {
                 String name = matcher.group(1);
                 String id = matcher.group(2);
                 insertUser1(Integer.parseInt(id), name);
-                insertMessage(textScrollPane, msgArea, null, "系统：", name+"加入了聊天室");
+                insertMessage(textScrollPane, msgArea, null, "系统：", name + "加入了聊天室");
             }
         }
-        users_label.setText("聊天人数："+users_map.size());
+        users_label.setText("聊天人数：" + users_map.size());
     }
-    public void insertUser(int id, String name){
+
+    public void insertUser(int id, String name) {
         users_map.put(name, id);
         users_model.addElement(name);
     }
 
-    public void delUser(String content){
-        if(content.length()>0){
+    public void delUser(String content) {
+        if (content.length() > 0) {
             int id = Integer.parseInt(content);
             Set<String> set = users_map.keySet();
             Iterator<String> iter = set.iterator();
-            String name=null;
-            while(iter.hasNext()){
+            String name = null;
+            while (iter.hasNext()) {
                 name = iter.next();
-                if(users_map.get(name)==id){
+                if (users_map.get(name) == id) {
                     users_model.removeElement(name);
                     break;
                 }
             }
             users_map.remove(name);
-            insertMessage(textScrollPane, msgArea, null, "系统：", name+"退出了聊天室");
+            insertMessage(textScrollPane, msgArea, null, "系统：", name + "退出了聊天室");
         }
-        users_label.setText("聊天人数："+users_map.size());
+        users_label.setText("聊天人数：" + users_map.size());
     }
 
-
-    public void delUser1(String content){
+    public void delUser1(String content) {
         System.out.println("yes");
-        if(content.length()>0){
+        if (content.length() > 0) {
             int id = Integer.parseInt(content);
             Set<String> set = users_map2.keySet();
             Iterator<String> iter = set.iterator();
-            String name=null;
-            while(iter.hasNext()){
+            String name = null;
+            while (iter.hasNext()) {
                 name = iter.next();
-                if(users_map2.get(name)==id){
+                if (users_map2.get(name) == id) {
                     users_model2.removeElement(name);
                     break;
                 }
@@ -329,11 +353,11 @@ public  class  Client implements ActionListener{
         }
     }
 
-    public void updateUser(String content){
-        if(content.length()>0){
+    public void updateUser(String content) {
+        if (content.length() > 0) {
             Pattern pattern = Pattern.compile("<id>(.*)</id><name>(.*)</name>");
             Matcher matcher = pattern.matcher(content);
-            if(matcher.find()){
+            if (matcher.find()) {
                 String id = matcher.group(1);
                 String name = matcher.group(2);
                 insertUser(Integer.parseInt(id), name);
@@ -341,42 +365,43 @@ public  class  Client implements ActionListener{
         }
     }
 
-    public void listUsers(String content){
+    public void listUsers(String content) {
         String name = null;
-        String id=null;
-        Pattern rough_pattern=null;
-        Matcher rough_matcher=null;
-        Pattern detail_pattern=null;
-        if(content.length()>0){
+        String id = null;
+        Pattern rough_pattern = null;
+        Matcher rough_matcher = null;
+        Pattern detail_pattern = null;
+        if (content.length() > 0) {
             rough_pattern = Pattern.compile("<member>(.*?)</member>");
             rough_matcher = rough_pattern.matcher(content);
-            while(rough_matcher.find()){
+            while (rough_matcher.find()) {
                 String detail = rough_matcher.group(1);
                 detail_pattern = Pattern.compile("<name>(.*)</name><id>(.*)</id>");
                 Matcher detail_matcher = detail_pattern.matcher(detail);
-                if(detail_matcher.find()){
+                if (detail_matcher.find()) {
                     name = detail_matcher.group(1);
                     id = detail_matcher.group(2);
                     insertUser(Integer.parseInt(id), name);
                 }
             }
         }
-        users_label.setText("聊天内人数："+users_map.size());
+        users_label.setText("聊天内人数：" + users_map.size());
     }
-    public void listUsers1(String content){
+
+    public void listUsers1(String content) {
         String name = null;
-        String id=null;
-        Pattern rough_pattern=null;
-        Matcher rough_matcher=null;
-        Pattern detail_pattern=null;
-        if(content.length()>0){
+        String id = null;
+        Pattern rough_pattern = null;
+        Matcher rough_matcher = null;
+        Pattern detail_pattern = null;
+        if (content.length() > 0) {
             rough_pattern = Pattern.compile("<member>(.*?)</member>");
             rough_matcher = rough_pattern.matcher(content);
-            while(rough_matcher.find()){
+            while (rough_matcher.find()) {
                 String detail = rough_matcher.group(1);
                 detail_pattern = Pattern.compile("<name>(.*)</name><id>(.*)</id>");
                 Matcher detail_matcher = detail_pattern.matcher(detail);
-                if(detail_matcher.find()){
+                if (detail_matcher.find()) {
                     name = detail_matcher.group(1);
                     id = detail_matcher.group(2);
                     insertUser1(Integer.parseInt(id), name);
@@ -385,61 +410,57 @@ public  class  Client implements ActionListener{
         }
     }
 
-    public void updateTextArea(String content){
+    public void updateTextArea(String content) {
         insertMessage(textScrollPane, msgArea, null, "系统：", content);
     }
 
-
-
-    public void updateTextAreaFromUser1(String content){
-        if(content.length()>0){
+    public void updateTextAreaFromUser1(String content) {
+        if (content.length() > 0) {
             Pattern pattern = Pattern.compile("<from>(.*)</from><smsg>(.*)</smsg>");
             Matcher matcher = pattern.matcher(content);
-            if(matcher.find()){
+            if (matcher.find()) {
                 String from = matcher.group(1);
                 String smsg = matcher.group(2);
                 String fromName = getUserName(from);
-                if(fromName.equals(name))
+                if (fromName.equals(name))
                     fromName = "你";
-                if(smsg.startsWith("<emoji>")){
-                    String emojiCode = smsg.substring(7, smsg.length()-8);
+                if (smsg.startsWith("<emoji>")) {
+                    String emojiCode = smsg.substring(7, smsg.length() - 8);
                     System.out.println(emojiCode);
-                    insertMessage(textScrollPane, msgArea, emojiCode, fromName+"说：", (String) null);
-                    return ;
+                    insertMessage(textScrollPane, msgArea, emojiCode, fromName + "说：", (String) null);
+                    return;
                 }
-                String[] smsgs=smsg.split("/n");
-                insertMessage(textScrollPane, msgArea, null, fromName+"说：", smsgs);
+                String[] smsgs = smsg.split("/n");
+                insertMessage(textScrollPane, msgArea, null, fromName + "说：", smsgs);
 
             }
         }
     }
 
-
-
-    public void updateTextAreaFromUser(String content){
-        if(content.length()>0){
+    public void updateTextAreaFromUser(String content) {
+        if (content.length() > 0) {
             Pattern pattern = Pattern.compile("<from>(.*)</from><smsg>(.*)</smsg>");
             Matcher matcher = pattern.matcher(content);
-            if(matcher.find()){
+            if (matcher.find()) {
                 String from = matcher.group(1);
                 String smsg = matcher.group(2);
                 String fromName = getUserName(from);
-                if(fromName.equals(name))
+                if (fromName.equals(name))
                     fromName = "你";
-                if(smsg.startsWith("<emoji>")){
-                    String emojiCode = smsg.substring(7, smsg.length()-8);
+                if (smsg.startsWith("<emoji>")) {
+                    String emojiCode = smsg.substring(7, smsg.length() - 8);
                     System.out.println(emojiCode);
-                    insertMessage(textScrollPane, msgArea, emojiCode, fromName+"说：", (String) null);
-                    return ;
+                    insertMessage(textScrollPane, msgArea, emojiCode, fromName + "说：", (String) null);
+                    return;
                 }
-                String[] smsgs=smsg.split("/n");
-                insertMessage(textScrollPane, msgArea, null, fromName+"说：", smsgs);
+                String[] smsgs = smsg.split("/n");
+                insertMessage(textScrollPane, msgArea, null, fromName + "说：", smsgs);
 
             }
         }
     }
 
-    public void showEscDialog(String content){
+    public void showEscDialog(String content) {
         JOptionPane.showMessageDialog(frame, content);
         /*清除消息区内容，清除用户数据模型内容和用户map内容，更新聊天内人数*/
         msgArea.setText("");
@@ -448,25 +469,25 @@ public  class  Client implements ActionListener{
         users_label.setText("聊天人数：0");
 
     }
-    public void addRoom(String content){
-        if(content.length()>0){
+
+    public void addRoom(String content) {
+        if (content.length() > 0) {
             Pattern pattern = Pattern.compile("<rid>(.*)</rid><rname>(.*)</rname>");
             Matcher matcher = pattern.matcher(content);
-            if(matcher.find()){
+            if (matcher.find()) {
                 String rid = matcher.group(1);
                 String rname = matcher.group(2);
                 insertRoom(Integer.parseInt(rid), rname);
             }
         }
-        rooms_label.setText("当前聊天数："+rooms_map.size());
+        rooms_label.setText("当前聊天数：" + rooms_map.size());
     }
 
-
-    public void addRoom1(String content){
-        if(content.length()>0){
+    public void addRoom1(String content) {
+        if (content.length() > 0) {
             Pattern pattern = Pattern.compile("<rid>(.*)</rid><rname>(.*)</rname>");
             Matcher matcher = pattern.matcher(content);
-            if(matcher.find()){
+            if (matcher.find()) {
                 String rid = matcher.group(1);
                 String rname = matcher.group(2);
                 insertRoom1(Integer.parseInt(rid), rname);
@@ -477,78 +498,79 @@ public  class  Client implements ActionListener{
     private void insertRoom1(int parseInt, String rname) {
     }
 
-    public void delRoom(String content){
-        if(content.length()>0){
+    public void delRoom(String content) {
+        if (content.length() > 0) {
             int delRoomId = Integer.parseInt(content);
 
             Set<String> set = rooms_map.keySet();
             Iterator<String> iter = set.iterator();
-            String rname=null;
-            while(iter.hasNext()){
+            String rname = null;
+            while (iter.hasNext()) {
                 rname = iter.next();
-                if(rooms_map.get(rname)==delRoomId){
+                if (rooms_map.get(rname) == delRoomId) {
                     rooms_model.removeElement(rname);
                     break;
                 }
             }
             rooms_map.remove(rname);
         }
-        rooms_label.setText("当前聊天数："+rooms_map.size());
+        rooms_label.setText("当前聊天数：" + rooms_map.size());
     }
 
-    public void listRooms(String content){
+    public void listRooms(String content) {
         String rname = null;
-        String rid=null;
-        Pattern rough_pattern=null;
-        Matcher rough_matcher=null;
-        Pattern detail_pattern=null;
-        if(content.length()>0){
+        String rid = null;
+        Pattern rough_pattern = null;
+        Matcher rough_matcher = null;
+        Pattern detail_pattern = null;
+        if (content.length() > 0) {
             rough_pattern = Pattern.compile("<room>(.*?)</room>");
             rough_matcher = rough_pattern.matcher(content);
-            while(rough_matcher.find()){
+            while (rough_matcher.find()) {
                 String detail = rough_matcher.group(1);
                 detail_pattern = Pattern.compile("<rname>(.*)</rname><rid>(.*)</rid>");
                 Matcher detail_matcher = detail_pattern.matcher(detail);
-                if(detail_matcher.find()){
+                if (detail_matcher.find()) {
                     rname = detail_matcher.group(1);
                     rid = detail_matcher.group(2);
                     insertRoom(Integer.parseInt(rid), rname);
                 }
             }
         }
-        rooms_label.setText("当前聊天数："+rooms_map.size());
+        rooms_label.setText("当前聊天数：" + rooms_map.size());
     }
 
-    private void insertRoom(Integer rid, String rname){
-        if(!rooms_map.containsKey(rname)){
+    private void insertRoom(Integer rid, String rname) {
+        if (!rooms_map.containsKey(rname)) {
             rooms_map.put(rname, rid);
             rooms_model.addElement(rname);
-        }else{
+        } else {
             rooms_map.remove(rname);
             rooms_model.removeElement(rname);
             rooms_map.put(rname, rid);
             rooms_model.addElement(rname);
         }
-        rooms_label.setText("当前聊天数："+rooms_map.size());
+        rooms_label.setText("当前聊天数：" + rooms_map.size());
     }
 
-    private void insertUser(Integer id, String name){
-        if(!users_map.containsKey(name)){
+    private void insertUser(Integer id, String name) {
+        if (!users_map.containsKey(name)) {
             users_map.put(name, id);
             users_model.addElement(name);
-        }else{
+        } else {
             users_map.remove(name);
             users_model.removeElement(name);
             users_map.put(name, id);
             users_model.addElement(name);
         }
-        users_label.setText("聊天人数："+users_map.size());
+        users_label.setText("聊天人数：" + users_map.size());
     }
-    public void insertUser1(int id, String name){
-        if(!users_map2.containsKey(name)){
+
+    public void insertUser1(int id, String name) {
+        if (!users_map2.containsKey(name)) {
             users_map2.put(name, id);
             users_model2.addElement(name);
-        }else{
+        } else {
             users_map2.remove(name);
             users_model2.removeElement(name);
             users_map2.put(name, id);
@@ -557,30 +579,28 @@ public  class  Client implements ActionListener{
 
     }
 
-
-    private String getUserName(String strId){
+    private String getUserName(String strId) {
         int uid = Integer.parseInt(strId);
         Set<String> set = users_map.keySet();
         Iterator<String> iterator = set.iterator();
-        String cur=null;
-        while(iterator.hasNext()){
+        String cur = null;
+        while (iterator.hasNext()) {
             cur = iterator.next();
-            if(users_map.get(cur)==uid){
+            if (users_map.get(cur) == uid) {
                 return cur;
             }
         }
         return "";
     }
 
-
-    private String getRoomName(String strId){
+    private String getRoomName(String strId) {
         int rid = Integer.parseInt(strId);
         Set<String> set = rooms_map.keySet();
         Iterator<String> iterator = set.iterator();
         String cur = null;
-        while(iterator.hasNext()){
+        while (iterator.hasNext()) {
             cur = iterator.next();
-            if(rooms_map.get(cur)==rid){
+            if (rooms_map.get(cur) == rid) {
                 return cur;
             }
         }
@@ -588,7 +608,7 @@ public  class  Client implements ActionListener{
     }
 
     private void insertMessage(JScrollPane scrollPane, JTextPane textPane,
-                               String icon_code, String title, String[] content){
+                               String icon_code, String title, String[] content) {
         StyledDocument document = textPane.getStyledDocument();
         SimpleAttributeSet title_attr = new SimpleAttributeSet();
         StyleConstants.setBold(title_attr, true);
@@ -597,8 +617,8 @@ public  class  Client implements ActionListener{
         StyleConstants.setBold(content_attr, false);
         StyleConstants.setForeground(content_attr, Color.BLACK);
         Style style = null;
-        if(icon_code!=null){
-            String path =icon_code+".png";
+        if (icon_code != null) {
+            String path = icon_code + ".png";
             ImageIcon icon = new ImageIcon(ClassLoader.getSystemResource(path));
             Image img = icon.getImage().getScaledInstance(50, 50, Image.SCALE_DEFAULT);
             icon = new ImageIcon(img);
@@ -607,10 +627,11 @@ public  class  Client implements ActionListener{
         }
 
         try {
-            document.insertString(document.getLength(), title+"\n", title_attr);
-            if(style!=null) {document.insertString(document.getLength(), "\n", style);}
-            else {
-                for (String content1 : content){
+            document.insertString(document.getLength(), title + "\n", title_attr);
+            if (style != null) {
+                document.insertString(document.getLength(), "\n", style);
+            } else {
+                for (String content1 : content) {
                     document.insertString(document.getLength(), " " + content1 + "\n", content_attr);
                 }
             }
@@ -619,8 +640,9 @@ public  class  Client implements ActionListener{
         }
         vertical.setValue(vertical.getMaximum());
     }
+
     private void insertMessage(JScrollPane scrollPane, JTextPane textPane,
-                               String icon_code, String title, String content){
+                               String icon_code, String title, String content) {
         StyledDocument document = textPane.getStyledDocument();
         SimpleAttributeSet title_attr = new SimpleAttributeSet();
         StyleConstants.setBold(title_attr, true);
@@ -629,8 +651,8 @@ public  class  Client implements ActionListener{
         StyleConstants.setBold(content_attr, false);
         StyleConstants.setForeground(content_attr, Color.BLACK);
         Style style = null;
-        if(icon_code!=null){
-            String path =icon_code+".png";
+        if (icon_code != null) {
+            String path = icon_code + ".png";
             Icon icon = new ImageIcon(ClassLoader.getSystemResource(path));
             Image img = ((ImageIcon) icon).getImage().getScaledInstance(50, 50, Image.SCALE_DEFAULT);
             icon = new ImageIcon(img);
@@ -639,11 +661,11 @@ public  class  Client implements ActionListener{
         }
 
         try {
-            document.insertString(document.getLength(), title+"\n", title_attr);
-            if(style!=null)
+            document.insertString(document.getLength(), title + "\n", title_attr);
+            if (style != null)
                 document.insertString(document.getLength(), "\n", style);
             else
-                document.insertString(document.getLength(), " "+content+"\n", content_attr);
+                document.insertString(document.getLength(), " " + content + "\n", content_attr);
 
         } catch (BadLocationException ex) {
             System.out.println("Bad location exception");
@@ -651,31 +673,7 @@ public  class  Client implements ActionListener{
         /*设置滑动条到最后*/
         vertical.setValue(vertical.getMaximum());
     }
-    public static void setUIFont()
-    {
-        Font f = new Font("微软雅黑", Font.PLAIN, 14);
-        String[] names ={ "Label", "CheckBox", "PopupMenu","MenuItem", "CheckBoxMenuItem",
-                "JRadioButtonMenuItem","ComboBox", "Button", "Tree", "ScrollPane",
-                "TabbedPane", "EditorPane", "TitledBorder", "Menu", "TextArea","TextPane",
-                "OptionPane", "MenuBar", "ToolBar", "ToggleButton", "ToolTip",
-                "ProgressBar", "TableHeader", "Panel", "List", "ColorChooser",
-                "PasswordField","TextField", "Table", "Label", "Viewport",
-                "RadioButtonMenuItem","RadioButton", "DesktopPane", "InternalFrame"
-        };
-        for (String item : names) {
-            UIManager.put(item+ ".font",f);
-        }
-    }
 
-    public static void setUIStyle(){
-        String lookAndFeel =UIManager.getSystemLookAndFeelClassName();
-        try {
-            UIManager.setLookAndFeel(lookAndFeel);
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException |
-                 UnsupportedLookAndFeelException e) {
-            e.printStackTrace();
-        }
-    }
     public Component getFrame() {
         return frame;
     }

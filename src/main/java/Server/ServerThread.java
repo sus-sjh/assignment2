@@ -16,34 +16,35 @@ import User.User;
 public class ServerThread extends Thread {
     private User user;
     private ArrayList<User> userList;
-    private RoomList map;   
+    private RoomList map;
     private long roomId;
     private PrintWriter pw;
+
     public ServerThread(User user,
-                        ArrayList<User> userList, RoomList map){
-        this.user=user;
-        this.userList=userList;
-        this.map=map;
-        pw=null;
+                        ArrayList<User> userList, RoomList map) {
+        this.user = user;
+        this.userList = userList;
+        this.map = map;
+        pw = null;
         roomId = -1;
     }
-    
-    public void run(){
-        try{
-            for (int i = 0; true;) {
-                String msg=user.getBr().readLine();
-                System.out.println(msg); 
+
+    public void run() {
+        try {
+            for (int i = 0; true; ) {
+                String msg = user.getBr().readLine();
+                System.out.println(msg);
                 parseMsg(msg);
             }
-        }catch (SocketException se) { 
-            System.out.println("user "+user.getName()+" logout.");
+        } catch (SocketException se) {
+            System.out.println("user " + user.getName() + " logout.");
             System.out.println("yes");
 
-        }catch (Exception e) { 
+        } catch (Exception e) {
             e.printStackTrace();
-        }finally {
+        } finally {
             try {
-          
+
                 remove(user);
                 user.getBr().close();
                 user.getSocket().close();
@@ -52,21 +53,21 @@ public class ServerThread extends Thread {
             }
         }
     }
-    
+
     private void parseMsg(String msg) throws IOException {
         String code = null;
-        String message=null;
-        if(msg.length()>0){
+        String message = null;
+        if (msg.length() > 0) {
             /*匹配指令类型部分的字符串*/
             Pattern pattern = Pattern.compile("<code>(.*)</code>");
             Matcher matcher = pattern.matcher(msg);
-            if(matcher.find()){
+            if (matcher.find()) {
                 code = matcher.group(1);
             }
             /*匹配消息部分的字符串*/
             pattern = Pattern.compile("<msg>(.*)</msg>");
             matcher = pattern.matcher(msg);
-            if(matcher.find()){
+            if (matcher.find()) {
                 message = matcher.group(1);
             }
 
@@ -159,18 +160,18 @@ public class ServerThread extends Thread {
 
     private String getUserList() {
         StringBuilder stringBuffer = new StringBuilder();
-        for(User each: userList){
+        for (User each : userList) {
             stringBuffer.append("<member><name>").append(each.getName()).append("</name><id>").append(each.getId()).append("</id></member>");
         }
         return stringBuffer.toString();
     }
 
-    private String getMembersInRoom(){
+    private String getMembersInRoom() {
         Room room = map.getRoom(roomId);
         StringBuilder stringBuffer = new StringBuilder();
-        if(room != null){
+        if (room != null) {
             ArrayList<User> users = room.getUsers();
-            for(User each: users){
+            for (User each : users) {
                 stringBuffer.append("<member><name>").append(each.getName()).append("</name><id>").append(each.getId()).append("</id></member>");
             }
         }
@@ -178,7 +179,7 @@ public class ServerThread extends Thread {
     }
 
 
-    private String getRoomsList(){
+    private String getRoomsList() {
         String[][] strings = map.listRooms();
         StringBuilder sb = new StringBuilder();
         for (String[] string : strings) {
@@ -187,14 +188,14 @@ public class ServerThread extends Thread {
         return sb.toString();
     }
 
-    private String buildCodeWithMsg(String msg, int code){
-        return "<code>"+code+"</code><msg>"+msg+"</msg>\n";
+    private String buildCodeWithMsg(String msg, int code) {
+        return "<code>" + code + "</code><msg>" + msg + "</msg>\n";
     }
 
     private void sendMsg(String msg) {
-        for(User each:userList){
+        for (User each : userList) {
             try {
-                pw=each.getPw();
+                pw = each.getPw();
                 pw.println(msg);
                 pw.flush();
                 System.out.println(msg);
@@ -204,11 +205,11 @@ public class ServerThread extends Thread {
         }
     }
 
-    private void sendRoomMsg(String msg){
+    private void sendRoomMsg(String msg) {
         Room room = map.getRoom(roomId);
-        if(room != null){
+        if (room != null) {
             ArrayList<User> users = room.getUsers();
-            for(User each: users){
+            for (User each : users) {
                 pw = each.getPw();
                 pw.println(msg);
                 pw.flush();
@@ -216,12 +217,12 @@ public class ServerThread extends Thread {
         }
     }
 
-    private void sendRoomMsgExceptSelf(String msg){
+    private void sendRoomMsgExceptSelf(String msg) {
         Room room = map.getRoom(roomId);
-        if(room != null){
+        if (room != null) {
             ArrayList<User> users = room.getUsers();
-            for(User each: users){
-                if(each.getId()!=user.getId()){
+            for (User each : users) {
+                if (each.getId() != user.getId()) {
                     pw = each.getPw();
                     pw.println(msg);
                     pw.flush();
@@ -230,39 +231,39 @@ public class ServerThread extends Thread {
         }
     }
 
-    private void returnMsg(String msg){
-        try{
+    private void returnMsg(String msg) {
+        try {
             pw = user.getPw();
             pw.println(msg);
             pw.flush();
-        }catch (Exception e) {
+        } catch (Exception e) {
             System.out.println("exception in returnMsg()");
         }
     }
 
-    private void remove(User user){
-        sendMsg(buildCodeWithMsg(""+user.getId(), 8));
-        if(roomId!=-1){
-            int flag=map.esc(user, roomId);
-            sendRoomMsgExceptSelf(buildCodeWithMsg(""+user.getId(), 12));
-            long oldRoomId=roomId;
+    private void remove(User user) {
+        sendMsg(buildCodeWithMsg("" + user.getId(), 8));
+        if (roomId != -1) {
+            int flag = map.esc(user, roomId);
+            sendRoomMsgExceptSelf(buildCodeWithMsg("" + user.getId(), 12));
+            long oldRoomId = roomId;
             roomId = -1;
-            if(flag==0){
-                sendMsg(buildCodeWithMsg(""+oldRoomId, 13));
+            if (flag == 0) {
+                sendMsg(buildCodeWithMsg("" + oldRoomId, 13));
             }
         }
         userList.remove(user);
     }
 
-    private void sendUserList(){
+    private void sendUserList() {
         sendMsg(buildCodeWithMsg(getUserList(), 7));
     }
 
-    private void sendRoomList(){
+    private void sendRoomList() {
         sendMsg(buildCodeWithMsg(getRoomsList(), 3));
     }
 
-    private void sendRoomUserList(){
+    private void sendRoomUserList() {
         returnMsg(buildCodeWithMsg(getMembersInRoom(), 21));
     }
 

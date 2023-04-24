@@ -7,9 +7,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 /**
- *
  * @author lannooo
- *
  */
 public class User {
     private String name;
@@ -20,24 +18,24 @@ public class User {
     private PrintWriter pw;
 
     /**
-     *
-     * @param name: 设置user的姓名
+     * @param name:                设置user的姓名
      * @param id：设置user的id
      * @param socket:保存用户连接的socket
      * @throws IOException
      */
     public User(String name, long id, final Socket socket) throws IOException {
-        this.name=name;
-        this.id=id;
-        this.socket=socket;
-        this.br=new BufferedReader(new InputStreamReader(
+        this.name = name;
+        this.id = id;
+        this.socket = socket;
+        this.br = new BufferedReader(new InputStreamReader(
                 socket.getInputStream()));
-        this.pw=new PrintWriter(socket.getOutputStream());
+        this.pw = new PrintWriter(socket.getOutputStream());
 
     }
 
     /**
      * 获得该用户的id
+     *
      * @return id
      */
     public long getId() {
@@ -46,6 +44,7 @@ public class User {
 
     /**
      * 设置该用户的id
+     *
      * @param id 新的id
      */
     public void setId(long id) {
@@ -54,6 +53,7 @@ public class User {
 
     /**
      * 获得用户当前所在的聊天号
+     *
      * @return roomId
      */
     public long getRoomId() {
@@ -62,6 +62,7 @@ public class User {
 
     /**
      * 设置当前用户的所在的聊天号
+     *
      * @param roomId
      */
     public void setRoomId(long roomId) {
@@ -69,15 +70,8 @@ public class User {
     }
 
     /**
-     * 设置当前用户在聊天室中的昵称
-     * @param name
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
      * 返回当前用户在聊天中的昵称
+     *
      * @return
      */
     public String getName() {
@@ -85,7 +79,17 @@ public class User {
     }
 
     /**
+     * 设置当前用户在聊天室中的昵称
+     *
+     * @param name
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
      * 返回当前用户连接的socket实例
+     *
      * @return
      */
     public Socket getSocket() {
@@ -94,6 +98,7 @@ public class User {
 
     /**
      * 设置当前用户连接的socket
+     *
      * @param socket
      */
     public void setSocket(Socket socket) {
@@ -102,6 +107,7 @@ public class User {
 
     /**
      * 获得该用户的消息读取辅助类BufferedReader实例
+     *
      * @return
      */
     public BufferedReader getBr() {
@@ -110,6 +116,7 @@ public class User {
 
     /**
      * 设置 用户的消息读取辅助类
+     *
      * @param br
      */
     public void setBr(BufferedReader br) {
@@ -118,6 +125,7 @@ public class User {
 
     /**
      * 获得消息写入类实例
+     *
      * @return
      */
     public PrintWriter getPw() {
@@ -126,6 +134,7 @@ public class User {
 
     /**
      * 设置消息写入类实例
+     *
      * @param pw
      */
     public void setPw(PrintWriter pw) {
@@ -137,8 +146,9 @@ public class User {
      */
     @Override
     public String toString() {
-        return "#User"+id+"#"+name+"[#Room"+roomId+"#]<socket:"+socket+">";
+        return "#User" + id + "#" + name + "[#Room" + roomId + "#]<socket:" + socket + ">";
     }
+
     public void sendMessage(User recipient, String message) {
         try {
             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);

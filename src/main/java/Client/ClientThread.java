@@ -9,16 +9,18 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-public class ClientThread extends Thread{
+
+public class ClientThread extends Thread {
     private Socket socket;
     private Client client;
     private BufferedReader br;
     private PrintWriter pw;
-    public ClientThread(Socket socket, Client client){
+
+    public ClientThread(Socket socket, Client client) {
         this.client = client;
         this.socket = socket;
         try {
-            br=new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
         } catch (IOException e) {
             System.out.println("cannot get input stream from socket.");
@@ -26,86 +28,85 @@ public class ClientThread extends Thread{
     }
 
     public void run() {
-        try{
-            br=new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            while(true){
+        try {
+            br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            while (true) {
                 String msg = br.readLine();
                 parseMessage(msg);
             }
-        }catch (SocketException s){
+        } catch (SocketException s) {
             System.out.println("Server is closed");
             JOptionPane.showMessageDialog(client.getFrame(), "服务器已关闭！");
 
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void parseMessage(String message){
+    public void parseMessage(String message) {
         String code = null;
-        String msg=null;
+        String msg = null;
 
         try {
-        if(message.length()>0){
-            var pattern = Pattern.compile("<code>(.*)</code>");
-            Matcher matcher;
-            matcher = pattern.matcher(message);
-            if(matcher.find()){
-                code = matcher.group(1);
+            if (message.length() > 0) {
+                var pattern = Pattern.compile("<code>(.*)</code>");
+                Matcher matcher;
+                matcher = pattern.matcher(message);
+                if (matcher.find()) {
+                    code = matcher.group(1);
+                }
+                pattern = Pattern.compile("<msg>(.*)</msg>");
+                matcher = pattern.matcher(message);
+                if (matcher.find()) {
+                    msg = matcher.group(1);
+                }
+                System.out.println(code + ":" + msg);
+                switch (code) {
+                    case "1", "5", "6":
+                        client.updateTextArea(msg);
+                        break;
+                    case "2":
+                        client.showEscDialog(msg);
+                        break;
+                    case "3":
+                        client.listRooms(msg);
+                        break;
+                    case "4":
+                        client.updateTextAreaFromUser(msg);
+                        break;
+                    case "7":
+                        client.listUsers1(msg);
+                        break;
+                    case "8":
+                        client.delUser1(msg);
+                        break;
+                    case "9":
+                        client.delRoom1(msg);
+                        break;
+                    case "10":
+                        client.addRoom1(msg);
+                        break;
+                    case "11":
+                        client.addUser(msg);
+                        break;
+                    case "12":
+                        client.delUser(msg);
+                        break;
+                    case "13":
+                        client.delRoom(msg);
+                        break;
+                    case "15":
+                        client.addRoom(msg);
+                        break;
+                    case "16":
+                        client.updateUser(msg);
+                        break;
+                    case "21":
+                        client.listUsers(msg);
+                        break;
+                }
             }
-            pattern = Pattern.compile("<msg>(.*)</msg>");
-            matcher = pattern.matcher(message);
-            if(matcher.find()){
-                msg = matcher.group(1);
-            }
-            System.out.println(code+":"+msg);
-            switch(code){
-                case "1", "5", "6":
-                    client.updateTextArea(msg);
-                    break;
-                case "2":
-                    client.showEscDialog(msg);
-                    break;
-                case "3":
-                    client.listRooms(msg);
-                    break;
-                case "4":
-                    client.updateTextAreaFromUser(msg);
-                    break;
-                case "7":
-                    client.listUsers1(msg);
-                    break;
-                case "8":
-                    client.delUser1(msg);
-                    break;
-                case "9":
-                    client.delRoom1(msg);
-                    break;
-                case "10":
-                    client.addRoom1(msg);
-                    break;
-                case "11":
-                    client.addUser(msg);
-                    break;
-                case "12":
-                    client.delUser(msg);
-                    break;
-                case "13":
-                    client.delRoom(msg);
-                    break;
-                case "15":
-                    client.addRoom(msg);
-                    break;
-                case "16":
-                    client.updateUser(msg);
-                    break;
-                case "21":
-                    client.listUsers(msg);
-                    break;
-            }
-        }
-        }catch (Exception e) {
+        } catch (Exception e) {
             System.out.println("parseMessage error");
         }
 
@@ -142,8 +143,6 @@ public class ClientThread extends Thread{
     public void setPw(PrintWriter pw) {
         this.pw = pw;
     }
-
-
 
 
 }

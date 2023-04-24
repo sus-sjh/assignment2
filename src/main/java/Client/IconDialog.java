@@ -17,6 +17,7 @@ public class IconDialog implements ActionListener {
 
     private JDialog dialog;
     private Client client;
+
     public IconDialog(JFrame frame, Client client) {
         this.client = client;
         dialog = new JDialog(frame, "请选择表情", true);
@@ -24,15 +25,15 @@ public class IconDialog implements ActionListener {
         ImageIcon[] icons = new ImageIcon[17];
         Container dialogPane = dialog.getContentPane();
         dialogPane.setLayout(new GridLayout(0, 4));
-        for(int i=1; i<=16; i++){
-            String path = i+".png";
+        for (int i = 1; i <= 16; i++) {
+            String path = i + ".png";
             icons[i] = new ImageIcon(ClassLoader.getSystemResource(path));
             icons[i].setImage(icons[i].getImage().getScaledInstance(50, 50, Image.SCALE_DEFAULT));
-            icon_button[i] = new JButton(""+i, icons[i]);
+            icon_button[i] = new JButton("" + i, icons[i]);
             icon_button[i].addActionListener(this);
             dialogPane.add(icon_button[i]);
         }
-        dialog.setBounds(200,266,266,280);
+        dialog.setBounds(200, 266, 266, 280);
         dialog.setVisible(true);
     }
 
@@ -41,7 +42,7 @@ public class IconDialog implements ActionListener {
         String cmd = e.getActionCommand();
         System.out.println(cmd);
         dialog.dispose();
-        client.sendMsg("<emoji>"+cmd+"</emoji>", "message");
+        client.sendMsg("<emoji>" + cmd + "</emoji>", "message");
     }
 
 }
